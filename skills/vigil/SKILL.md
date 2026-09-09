@@ -19,6 +19,9 @@ phone, with no terminal open.
 "${CLAUDE_PLUGIN_ROOT}/agent/install-agent.sh"
 ```
 
+It prints an eight-character pairing code. Read it out to them — they enter it
+in the app once, and it is what tells their phone which Mac is theirs.
+
 Then confirm:
 
 ```bash
@@ -47,9 +50,15 @@ a total cannot.
 Check in order and stop at the first failure:
 
 1. `launchctl list | grep vigil` — agent loaded?
-2. `curl -s localhost:7391/health` — serving?
-3. `dns-sd -B _vigil._tcp local` — advertising? (Ctrl-C to stop)
-4. Phone and Mac on the same Wi-Fi, phone not on a guest network.
+2. `curl -s localhost:7391/health` — serving? (this route needs no code)
+3. `curl -s "localhost:7391/summary?token=$(cat ~/.vigil/token)"` — does the
+   code work? A 401 with the right code means the file and the running agent
+   disagree; restart the agent.
+4. `dns-sd -B _vigil._tcp local` — advertising? (Ctrl-C to stop)
+5. Phone and Mac on the same Wi-Fi, phone not on a guest network. Guest
+   networks often isolate clients, which no amount of configuration fixes.
+
+If they need the code again: `cat ~/.vigil/token`
 
 There is no cloud fallback by design. If discovery fails there is a real network
 problem to fix, not a service to sign into.

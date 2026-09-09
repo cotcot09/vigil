@@ -12,6 +12,15 @@ hooks — so there is nothing that can silently stop recording.
 Peak 1 AM · 52% between 10 PM and 6 AM
 ```
 
+## Requirements
+
+macOS with `python3` on your PATH. If `python3 --version` prints nothing,
+install Apple's command line tools first — one command, no Xcode download:
+
+```bash
+xcode-select --install
+```
+
 ## Install
 
 ```bash
@@ -19,6 +28,8 @@ git clone https://github.com/cotcot09/vigil ~/.claude/skills/vigil
 ```
 
 Restart Claude Code, then say **“set up vigil”**.
+
+It prints an eight-character pairing code. Enter that in the app once.
 
 That is the whole setup. The bundled skill starts a background service and
 confirms it. Your existing transcripts are read immediately, so the dial is
@@ -40,14 +51,20 @@ tool arguments.
 Transcripts are parsed for timestamps and discarded. Nothing is copied, nothing
 is uploaded, and there is no network code outside the local-network server.
 
-## Why there is no pairing code
+## Why there is a pairing code
 
 The Mac advertises `_vigil._tcp` over Bonjour and serves ~370 bytes of JSON on
-the local network. The app browses for that service and fetches it. No relay,
-no account, no cloud — if the two devices are not on the same network, nothing
-happens at all.
+the local network. No relay, no account, no cloud — if the two devices are not
+on the same network, nothing happens at all.
 
-That makes the privacy claim structural rather than a promise.
+But "on the same network" includes every other machine on a cafe, office or
+campus wifi, and a shared network may have several Macs running this. The code
+does two jobs: it stops anyone else on the network reading your hours, and it
+tells your phone which Mac is yours. The phone tries each Mac it discovers and
+keeps the one that accepts your code.
+
+The code lives in `~/.vigil/token`, mode 600, generated once. Requests without
+it get a 401. Delete that file to rotate it.
 
 ## By hand
 

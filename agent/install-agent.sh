@@ -5,7 +5,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LABEL="com.vigil.serve"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
-PY="$(command -v python3)"
+PY="$(command -v python3 || true)"
+if [ -z "$PY" ]; then
+  echo "python3 is not on your PATH, so there is nothing to run." >&2
+  echo "Install Apple's command line tools, then run this again:" >&2
+  echo "    xcode-select --install" >&2
+  exit 1
+fi
 
 mkdir -p "$HOME/Library/LaunchAgents" "$HOME/.vigil"
 

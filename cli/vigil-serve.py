@@ -5,7 +5,7 @@ The Mac advertises itself with Bonjour; the app finds it without anyone typing
 an address or a pairing code. Data crosses the room, never the internet — there
 is no account, no relay and no cloud storage anywhere in this path.
 """
-import os, sys, json, signal, socket, argparse, subprocess, threading
+import os, sys, json, signal, socket, secrets, argparse, subprocess, threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -18,6 +18,33 @@ _summary = SourceFileLoader(
 
 SERVICE = "_vigil._tcp"
 PORT    = int(os.environ.get("VIGIL_PORT", "7391"))
+ROOT    = os.environ.get("VIGIL_HOME", os.path.join(os.path.expanduser("~"), ".vigil"))
+TOKEN_F = os.path.join(ROOT, "token")
+
+# Unambiguous alphabet: no O/0, I/1, so a code read off a screen and typed
+# into a phone cannot be mistyped in the ways people actually mistype.
+ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def pairing_token():
+    """Stable per-Mac secret. Created once, reused forever after."""
+    try:
+        with open(TOKEN_F) as f:
+            t = f.read().strip()
+            if t:
+                return t
+    except FileNotFoundError:
+        pass
+    import secrets
+    t = "".join(secrets.choice(ALPHABET) for _ in range(8))
+    os.makedirs(ROOT, exist_ok=True)
+    with open(TOKEN_F, "w") as f:
+        f.write(t)
+    os.chmod(TOKEN_F, 0o600)
+    return t
+
+
+TOKEN = pairing_token()
 
 
 def lan_ip():
@@ -41,11 +68,22 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(raw)
 
+    def _authorised(self, query):
+        supplied = (self.headers.get("X-Vigil-Token")
+                    or (query.get("token") or [""])[0]).strip().upper()
+        return secrets.compare_digest(supplied, TOKEN)
+
     def do_GET(self):
         import urllib.parse as up
         parts = up.urlparse(self.path)
         path = parts.path.rstrip("/")
         query = up.parse_qs(parts.query)
+
+        # /health stays open so a phone can tell "wrong Mac" apart from
+        # "no Mac here", which is the difference between a useful error
+        # message and a spinner that never resolves.
+        if path != "/health" and not self._authorised(query):
+            return self._send(401, json.dumps({"error": "pairing required"}))
 
         if path in ("/summary", ""):
             # Recomputed per request, so the phone always sees the live number.
@@ -98,12 +136,15 @@ def main():
 
     ip = lan_ip()
     print()
-    print("  VIGIL is ready. Open the app on your phone — it will find this Mac.")
+    print("  VIGIL is ready. Open the app on your phone and enter this code:")
+    print()
+    print(f"      {TOKEN[:4]} - {TOKEN[4:]}")
     print()
     print(f"    discoverable as   {SERVICE} on this network")
-    print(f"    direct address    http://{ip}:{a.port}/summary")
+    print(f"    direct address    http://{ip}:{a.port}")
     print()
-    print("  Same Wi-Fi, no account, no cloud. Press Ctrl-C when the app says connected.")
+    print("  The code pairs this Mac to your phone, so a shared network cannot")
+    print("  read your hours and your phone cannot latch onto someone else's Mac.")
     print()
 
     def stop(*_):
