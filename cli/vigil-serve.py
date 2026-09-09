@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""Hand the summary to the phone over the local network, and nowhere else.
+
+The Mac advertises itself with Bonjour; the app finds it without anyone typing
+an address or a pairing code. Data crosses the room, never the internet — there
+is no account, no relay and no cloud storage anywhere in this path.
+"""
+import os, sys, json, signal, socket, argparse, subprocess, threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from importlib.machinery import SourceFileLoader
+
+_summary = SourceFileLoader(
+    "vigil_summary",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "vigil-summary.py")
+).load_module()
+
+SERVICE = "_vigil._tcp"
+PORT    = int(os.environ.get("VIGIL_PORT", "7391"))
+
+
+def lan_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("192.0.2.1", 1))          # TEST-NET-1: routes nowhere, never sends
+        return s.getsockname()[0]
+    except Exception:
+        return "127.0.0.1"
+    finally:
+        s.close()
+
+
+class Handler(BaseHTTPRequestHandler):
+    def _send(self, code, body, ctype="application/json"):
+        raw = body if isinstance(body, bytes) else body.encode()
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(raw)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(raw)
+
+    def do_GET(self):
+        path = self.path.split("?")[0].rstrip("/")
+        if path in ("/summary", ""):
+            # Recomputed per request, so the phone always sees the live number.
+            s = _summary.summarise()
+            if not s:
+                return self._send(503, json.dumps(
+                    {"error": "no activity recorded yet"}))
+            return self._send(200, json.dumps(s, separators=(",", ":")))
+        if path == "/health":
+            return self._send(200, json.dumps({"ok": True, "service": "vigil"}))
+        self._send(404, json.dumps({"error": "not found"}))
+
+    def log_message(self, *_):
+        pass                                   # the terminal shows status, not a request log
+
+
+def advertise(port, name):
+    """Register with Bonjour using the dns-sd binary macOS already ships."""
+    try:
+        return subprocess.Popen(
+            ["dns-sd", "-R", name, SERVICE, "local", str(port)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except FileNotFoundError:
+        return None
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Serve the VIGIL summary to your phone.")
+    ap.add_argument("--port", type=int, default=PORT)
+    ap.add_argument("--once", action="store_true",
+                    help="exit after the first successful fetch")
+    a = ap.parse_args()
+
+    if _summary.summarise() is None:
+        print("Nothing recorded yet. Run vigil-backfill.py, or install the hooks "
+              "and use Claude Code first.", file=sys.stderr)
+        return 1
+
+    srv = ThreadingHTTPServer(("0.0.0.0", a.port), Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    bonjour = advertise(a.port, socket.gethostname().replace(".local", ""))
+
+    ip = lan_ip()
+    print()
+    print("  VIGIL is ready. Open the app on your phone — it will find this Mac.")
+    print()
+    print(f"    discoverable as   {SERVICE} on this network")
+    print(f"    direct address    http://{ip}:{a.port}/summary")
+    print()
+    print("  Same Wi-Fi, no account, no cloud. Press Ctrl-C when the app says connected.")
+    print()
+
+    def stop(*_):
+        if bonjour:
+            bonjour.terminate()
+        srv.shutdown()
+        print("\n  Stopped.\n")
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, stop)
+    signal.signal(signal.SIGTERM, stop)
+    signal.pause()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

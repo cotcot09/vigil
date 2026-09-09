@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Keeps the summary reachable by the phone, permanently, with no terminal open.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+LABEL="com.vigil.serve"
+PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
+PY="$(command -v python3)"
+
+mkdir -p "$HOME/Library/LaunchAgents" "$HOME/.vigil"
+
+cat > "$PLIST" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$LABEL</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$PY</string>
+    <string>$ROOT/cli/vigil-serve.py</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ProcessType</key><string>Background</string>
+  <key>StandardOutPath</key><string>$HOME/.vigil/serve.log</string>
+  <key>StandardErrorPath</key><string>$HOME/.vigil/serve.log</string>
+</dict>
+</plist>
+PLIST
+
+launchctl bootout "gui/$UID/$LABEL" 2>/dev/null || true
+launchctl bootstrap "gui/$UID" "$PLIST"
+launchctl enable "gui/$UID/$LABEL" 2>/dev/null || true
+
+for _ in $(seq 1 25); do
+  if curl -fsS --max-time 1 http://127.0.0.1:7391/health >/dev/null 2>&1; then
+    echo "Vigil is serving on this Mac and will start again at login."
+    echo "Open the Vigil app on a phone on the same Wi-Fi — it finds this Mac by itself."
+    exit 0
+  fi
+  sleep 0.2
+done
+
+echo "Agent installed but not answering yet. Check: tail ~/.vigil/serve.log" >&2
+exit 1

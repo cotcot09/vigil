@@ -1,0 +1,7 @@
+{
+  "name": "vigil",
+  "displayName": "Vigil",
+  "version": "0.1.0",
+  "description": "Records when you work, not what you write. Feeds the Vigil iOS app.",
+  "hooks": "./hooks/hooks.json"
+}
