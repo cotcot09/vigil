@@ -125,12 +125,19 @@ def main():
     ap.add_argument("--port", type=int, default=PORT)
     a = ap.parse_args()
 
-    if _summary.summarise() is None:
-        print("No Claude Code activity found in ~/.claude/projects yet.",
-              file=sys.stderr)
+    # Deliberately does not refuse to start on an empty history. The agent
+    # runs under launchd with KeepAlive, so exiting here was a crash loop,
+    # and a phone got "no Mac found" when the truthful answer was "your Mac
+    # is fine, it just has nothing to report yet" — which /summary says with
+    # a 503 as soon as anyone asks.
+    try:
+        srv = ThreadingHTTPServer(("0.0.0.0", a.port), Handler)
+    except OSError as e:
+        print(f"Could not listen on port {a.port}: {e}", file=sys.stderr)
+        print("Something else is using it. Pick another with:", file=sys.stderr)
+        print(f"    VIGIL_PORT=7392 {sys.argv[0]}", file=sys.stderr)
+        print("and enter the address with that port in the app.", file=sys.stderr)
         return 1
-
-    srv = ThreadingHTTPServer(("0.0.0.0", a.port), Handler)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     bonjour = advertise(a.port, socket.gethostname().replace(".local", ""))
 
@@ -141,7 +148,8 @@ def main():
     print(f"      {TOKEN[:4]} - {TOKEN[4:]}")
     print()
     print(f"    discoverable as   {SERVICE} on this network")
-    print(f"    direct address    http://{ip}:{a.port}")
+    print(f"    if it cannot be found, type this into the app instead:")
+    print(f"                      {ip}:{a.port}")
     print()
     print("  The code pairs this Mac to your phone, so a shared network cannot")
     print("  read your hours and your phone cannot latch onto someone else's Mac.")
