@@ -1,16 +1,56 @@
 {
   "hooks": {
     "UserPromptSubmit": [
-      { "hooks": [ { "type": "command", "command": ["${CLAUDE_PLUGIN_ROOT}/hooks/vigil-collect.py"], "async": true, "timeout": 5 } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/vigil-collect.py\"",
+            "async": true,
+            "timeout": 5,
+            "statusMessage": "vigil"
+          }
+        ]
+      }
     ],
     "SessionStart": [
-      { "hooks": [ { "type": "command", "command": ["${CLAUDE_PLUGIN_ROOT}/hooks/vigil-collect.py"], "async": true, "timeout": 5 } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/vigil-collect.py\"",
+            "async": true,
+            "timeout": 5,
+            "statusMessage": "vigil"
+          }
+        ]
+      }
     ],
     "PostToolUse": [
-      { "hooks": [ { "type": "command", "command": ["${CLAUDE_PLUGIN_ROOT}/hooks/vigil-collect.py"], "async": true, "timeout": 5 } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/vigil-collect.py\"",
+            "async": true,
+            "timeout": 5,
+            "statusMessage": "vigil"
+          }
+        ]
+      }
     ],
     "Stop": [
-      { "hooks": [ { "type": "command", "command": ["${CLAUDE_PLUGIN_ROOT}/hooks/vigil-collect.py"], "async": true, "timeout": 5 } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/vigil-collect.py\"",
+            "async": true,
+            "timeout": 5,
+            "statusMessage": "vigil"
+          }
+        ]
+      }
     ]
   }
 }
