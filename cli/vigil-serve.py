@@ -85,13 +85,11 @@ def advertise(port, name):
 def main():
     ap = argparse.ArgumentParser(description="Serve the VIGIL summary to your phone.")
     ap.add_argument("--port", type=int, default=PORT)
-    ap.add_argument("--once", action="store_true",
-                    help="exit after the first successful fetch")
     a = ap.parse_args()
 
     if _summary.summarise() is None:
-        print("Nothing recorded yet. Run vigil-backfill.py, or install the hooks "
-              "and use Claude Code first.", file=sys.stderr)
+        print("No Claude Code activity found in ~/.claude/projects yet.",
+              file=sys.stderr)
         return 1
 
     srv = ThreadingHTTPServer(("0.0.0.0", a.port), Handler)
