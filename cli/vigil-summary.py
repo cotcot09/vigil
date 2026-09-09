@@ -17,7 +17,7 @@ INDEX   = os.path.join(ROOT, "index.json")
 PROJECTS = os.environ.get("VIGIL_PROJECTS",
                           os.path.join(HOME, ".claude", "projects"))
 BIN   = 300
-PEAK_WINDOW_HOURS = 8   # length of the block we search for, not its position
+PEAK_WINDOW_HOURS = 5   # length of the block we search for, not its position
 
 
 def _typed_prompt(rec):
