@@ -42,16 +42,30 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(raw)
 
     def do_GET(self):
-        path = self.path.split("?")[0].rstrip("/")
+        import urllib.parse as up
+        parts = up.urlparse(self.path)
+        path = parts.path.rstrip("/")
+        query = up.parse_qs(parts.query)
+
         if path in ("/summary", ""):
             # Recomputed per request, so the phone always sees the live number.
-            s = _summary.summarise()
+            # No project means the one worked in most recently.
+            project = (query.get("project") or [None])[0]
+            days = (query.get("days") or [None])[0]
+            s = _summary.summarise(int(days) if days and days.isdigit() else None,
+                                   project)
             if not s:
                 return self._send(503, json.dumps(
-                    {"error": "no activity recorded yet"}))
+                    {"error": "no activity found for that project"}))
             return self._send(200, json.dumps(s, separators=(",", ":")))
+
+        if path == "/projects":
+            return self._send(200, json.dumps(
+                {"projects": _summary.project_list()}, separators=(",", ":")))
+
         if path == "/health":
             return self._send(200, json.dumps({"ok": True, "service": "vigil"}))
+
         self._send(404, json.dumps({"error": "not found"}))
 
     def log_message(self, *_):
