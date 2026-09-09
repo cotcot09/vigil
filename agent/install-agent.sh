@@ -29,8 +29,15 @@ cat > "$PLIST" <<PLIST
 </plist>
 PLIST
 
+# bootout is asynchronous: bootstrapping too soon fails with EIO, which reads
+# like a permissions problem and is not. Wait for the label to actually go.
 launchctl bootout "gui/$UID/$LABEL" 2>/dev/null || true
-launchctl bootstrap "gui/$UID" "$PLIST"
+for _ in $(seq 1 30); do
+  launchctl print "gui/$UID/$LABEL" >/dev/null 2>&1 || break
+  sleep 0.2
+done
+
+launchctl bootstrap "gui/$UID" "$PLIST" 2>/dev/null ||   launchctl kickstart -k "gui/$UID/$LABEL" 2>/dev/null || true
 launchctl enable "gui/$UID/$LABEL" 2>/dev/null || true
 
 for _ in $(seq 1 25); do
