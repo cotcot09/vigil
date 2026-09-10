@@ -5,7 +5,7 @@ The Mac advertises itself with Bonjour; the app finds it without anyone typing
 an address or a pairing code. Data crosses the room, never the internet — there
 is no account, no relay and no cloud storage anywhere in this path.
 """
-import os, sys, json, signal, socket, secrets, argparse, subprocess, threading
+import os, sys, json, atexit, signal, socket, secrets, argparse, subprocess, threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -71,7 +71,10 @@ class Handler(BaseHTTPRequestHandler):
     def _authorised(self, query):
         supplied = (self.headers.get("X-Vigil-Token")
                     or (query.get("token") or [""])[0]).strip().upper()
-        return secrets.compare_digest(supplied, TOKEN)
+        # Bytes, not str: compare_digest raises TypeError on non-ASCII, which
+        # would turn a mistyped code into a 500 instead of a clean refusal.
+        return secrets.compare_digest(supplied.encode("utf-8", "replace"),
+                                      TOKEN.encode())
 
     def do_GET(self):
         import urllib.parse as up
@@ -111,13 +114,23 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def advertise(port, name):
-    """Register with Bonjour using the dns-sd binary macOS already ships."""
+    """Register with Bonjour using the dns-sd binary macOS already ships.
+
+    Clears any previous advertiser first. If this process is killed without
+    running its handlers, the child survives and keeps announcing a service
+    that no longer answers — and a phone that finds a dead record can stall
+    on it. launchd restarting us would otherwise stack advertisers too.
+    """
+    subprocess.run(["pkill", "-f", f"dns-sd -R .* {SERVICE}"],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
-        return subprocess.Popen(
+        child = subprocess.Popen(
             ["dns-sd", "-R", name, SERVICE, "local", str(port)],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except FileNotFoundError:
         return None
+    atexit.register(lambda: child.terminate())
+    return child
 
 
 def main():
