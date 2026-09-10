@@ -12,13 +12,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from importlib.machinery import SourceFileLoader
 
 _summary = SourceFileLoader(
-    "vigil_summary",
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "vigil-summary.py")
+    "notte_summary",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "notte-summary.py")
 ).load_module()
 
-SERVICE = "_vigil._tcp"
-PORT    = int(os.environ.get("VIGIL_PORT", "7391"))
-ROOT    = os.environ.get("VIGIL_HOME", os.path.join(os.path.expanduser("~"), ".vigil"))
+SERVICE = "_notte._tcp"
+PORT    = int(os.environ.get("NOTTE_PORT", "7391"))
+ROOT    = os.environ.get("NOTTE_HOME", os.path.join(os.path.expanduser("~"), ".notte"))
 TOKEN_F = os.path.join(ROOT, "token")
 
 # Unambiguous alphabet: no O/0, I/1, so a code read off a screen and typed
@@ -69,7 +69,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(raw)
 
     def _authorised(self, query):
-        supplied = (self.headers.get("X-Vigil-Token")
+        supplied = (self.headers.get("X-Notte-Token")
                     or (query.get("token") or [""])[0]).strip().upper()
         # Bytes, not str: compare_digest raises TypeError on non-ASCII, which
         # would turn a mistyped code into a 500 instead of a clean refusal.
@@ -105,7 +105,7 @@ class Handler(BaseHTTPRequestHandler):
                 {"projects": _summary.project_list()}, separators=(",", ":")))
 
         if path == "/health":
-            return self._send(200, json.dumps({"ok": True, "service": "vigil"}))
+            return self._send(200, json.dumps({"ok": True, "service": "notte"}))
 
         self._send(404, json.dumps({"error": "not found"}))
 
@@ -134,7 +134,7 @@ def advertise(port, name):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Serve the VIGIL summary to your phone.")
+    ap = argparse.ArgumentParser(description="Serve the NOTTE summary to your phone.")
     ap.add_argument("--port", type=int, default=PORT)
     a = ap.parse_args()
 
@@ -148,7 +148,7 @@ def main():
     except OSError as e:
         print(f"Could not listen on port {a.port}: {e}", file=sys.stderr)
         print("Something else is using it. Pick another with:", file=sys.stderr)
-        print(f"    VIGIL_PORT=7392 {sys.argv[0]}", file=sys.stderr)
+        print(f"    NOTTE_PORT=7392 {sys.argv[0]}", file=sys.stderr)
         print("and enter the address with that port in the app.", file=sys.stderr)
         return 1
     threading.Thread(target=srv.serve_forever, daemon=True).start()
@@ -156,7 +156,7 @@ def main():
 
     ip = lan_ip()
     print()
-    print("  VIGIL is ready. Open the app on your phone and enter this code:")
+    print("  NOTTE is ready. Open the app on your phone and enter this code:")
     print()
     print(f"      {TOKEN[:4]} - {TOKEN[4:]}")
     print()

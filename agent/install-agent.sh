@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LABEL="com.vigil.serve"
+LABEL="com.notte.serve"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 PY="$(command -v python3 || true)"
 if [ -z "$PY" ]; then
@@ -13,7 +13,7 @@ if [ -z "$PY" ]; then
   exit 1
 fi
 
-mkdir -p "$HOME/Library/LaunchAgents" "$HOME/.vigil"
+mkdir -p "$HOME/Library/LaunchAgents" "$HOME/.notte"
 
 cat > "$PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -24,13 +24,13 @@ cat > "$PLIST" <<PLIST
   <key>ProgramArguments</key>
   <array>
     <string>$PY</string>
-    <string>$ROOT/cli/vigil-serve.py</string>
+    <string>$ROOT/cli/notte-serve.py</string>
   </array>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
   <key>ProcessType</key><string>Background</string>
-  <key>StandardOutPath</key><string>$HOME/.vigil/serve.log</string>
-  <key>StandardErrorPath</key><string>$HOME/.vigil/serve.log</string>
+  <key>StandardOutPath</key><string>$HOME/.notte/serve.log</string>
+  <key>StandardErrorPath</key><string>$HOME/.notte/serve.log</string>
 </dict>
 </plist>
 PLIST
@@ -48,12 +48,12 @@ launchctl enable "gui/$UID/$LABEL" 2>/dev/null || true
 
 for _ in $(seq 1 25); do
   if curl -fsS --max-time 1 http://127.0.0.1:7391/health >/dev/null 2>&1; then
-    echo "Vigil is serving on this Mac and will start again at login."
-    echo "Open the Vigil app on a phone on the same Wi-Fi — it finds this Mac by itself."
+    echo "Notte is serving on this Mac and will start again at login."
+    echo "Open the Notte app on a phone on the same Wi-Fi — it finds this Mac by itself."
     exit 0
   fi
   sleep 0.2
 done
 
-echo "Agent installed but not answering yet. Check: tail ~/.vigil/serve.log" >&2
+echo "Agent installed but not answering yet. Check: tail ~/.notte/serve.log" >&2
 exit 1

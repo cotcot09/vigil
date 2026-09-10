@@ -1,6 +1,8 @@
-# Vigil
+# Notte
 
-Records **when you work**, not what you write — and feeds the Vigil iOS app.
+*notte* — Italian for night.
+
+Records **when you work**, not what you write — and feeds the Notte iOS app.
 
 It reads Claude Code's own transcripts in `~/.claude/projects/`, which already
 carry a timestamp on every record, and derives five-minute activity bins and a
@@ -24,10 +26,10 @@ xcode-select --install
 ## Install
 
 ```bash
-git clone https://github.com/cotcot09/vigil ~/.claude/skills/vigil
+git clone https://github.com/cotcot09/notte ~/.claude/skills/notte
 ```
 
-Restart Claude Code, then say **“set up vigil”**.
+Restart Claude Code, then say **“set up notte”**.
 
 It prints an eight-character pairing code. Enter that in the app once.
 
@@ -39,7 +41,7 @@ Open the app on a phone on the same Wi-Fi. It finds the Mac by itself.
 
 ## What it keeps
 
-Timestamps, and numbers derived from them. `~/.vigil/index.json` holds a byte
+Timestamps, and numbers derived from them. `~/.notte/index.json` holds a byte
 offset per transcript plus the activity bins and prompt count found so far, so
 each run only reads what is new — about a second cold, about 30 ms after that.
 
@@ -53,7 +55,7 @@ is uploaded, and there is no network code outside the local-network server.
 
 ## Why there is a pairing code
 
-The Mac advertises `_vigil._tcp` over Bonjour and serves ~370 bytes of JSON on
+The Mac advertises `_notte._tcp` over Bonjour and serves ~370 bytes of JSON on
 the local network. No relay, no account, no cloud — if the two devices are not
 on the same network, nothing happens at all.
 
@@ -63,16 +65,16 @@ does two jobs: it stops anyone else on the network reading your hours, and it
 tells your phone which Mac is yours. The phone tries each Mac it discovers and
 keeps the one that accepts your code.
 
-The code lives in `~/.vigil/token`, mode 600, generated once. Requests without
+The code lives in `~/.notte/token`, mode 600, generated once. Requests without
 it get a 401. Delete that file to rotate it.
 
 ## By hand
 
 ```bash
-~/.claude/skills/vigil/agent/install-agent.sh   # serve at login, no terminal
-~/.claude/skills/vigil/cli/vigil-summary.py     # a dial in the terminal
-~/.claude/skills/vigil/cli/vigil-summary.py --days 7
-~/.claude/skills/vigil/agent/uninstall-agent.sh
+~/.claude/skills/notte/agent/install-agent.sh   # serve at login, no terminal
+~/.claude/skills/notte/cli/notte-summary.py     # a dial in the terminal
+~/.claude/skills/notte/cli/notte-summary.py --days 7
+~/.claude/skills/notte/agent/uninstall-agent.sh
 ```
 
 ## Why five-minute bins

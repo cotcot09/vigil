@@ -1,6 +1,6 @@
 {
-  "name": "vigil",
-  "displayName": "Vigil",
+  "name": "notte",
+  "displayName": "Notte",
   "version": "0.1.0",
-  "description": "Reads Claude Code's own transcripts to show when you work. Feeds the Vigil iOS app."
+  "description": "Reads Claude Code's own transcripts to show when you work. Feeds the Notte iOS app."
 }

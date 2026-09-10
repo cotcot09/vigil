@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""VIGIL aggregator — reads Claude Code's own transcripts and reports when you work.
+"""NOTTE aggregator — reads Claude Code's own transcripts and reports when you work.
 
 Claude Code writes every session to ~/.claude/projects/<project>/<id>.jsonl as it
 happens, with a timestamp on every record. That is already the dataset, so this
@@ -12,9 +12,9 @@ the byte offset where the last run stopped.
 import os, sys, json, glob, datetime, collections, argparse
 
 HOME    = os.path.expanduser("~")
-ROOT    = os.environ.get("VIGIL_HOME", os.path.join(HOME, ".vigil"))
+ROOT    = os.environ.get("NOTTE_HOME", os.path.join(HOME, ".notte"))
 INDEX   = os.path.join(ROOT, "index.json")
-PROJECTS = os.environ.get("VIGIL_PROJECTS",
+PROJECTS = os.environ.get("NOTTE_PROJECTS",
                           os.path.join(HOME, ".claude", "projects"))
 BIN   = 300
 PEAK_WINDOW_HOURS = 5   # length of the block we search for, not its position
@@ -219,7 +219,7 @@ def clock(h):
 
 
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(description="Summarise VIGIL activity.")
+    ap = argparse.ArgumentParser(description="Summarise NOTTE activity.")
     ap.add_argument("--days", type=int, help="only the last N days")
     ap.add_argument("--project", help='folder name, or "*" for every project')
     ap.add_argument("--list", action="store_true", help="show every project seen")

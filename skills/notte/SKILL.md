@@ -1,11 +1,11 @@
 ---
-name: vigil
-description: Set up, check, or troubleshoot Vigil — the activity recorder that feeds the Vigil iOS app. Use when the user says "set up vigil", "connect vigil", "is vigil working", "show my vigil stats", "my hours", "when do I work", or asks why the Vigil app cannot find their Mac.
+name: notte
+description: Set up, check, or troubleshoot Notte — the activity recorder that feeds the Notte iOS app. Use when the user says "set up notte", "connect notte", "is notte working", "show my notte stats", "my hours", "when do I work", or asks why the Notte app cannot find their Mac.
 ---
 
-# Vigil
+# Notte
 
-Vigil reports **when** the user works by reading Claude Code's own transcripts in
+Notte reports **when** the user works by reading Claude Code's own transcripts in
 `~/.claude/projects/`. Those files already carry a timestamp on every record, so
 there is nothing to install into the session and nothing that can silently stop
 recording. There are no hooks.
@@ -25,10 +25,10 @@ in the app once, and it is what tells their phone which Mac is theirs.
 Then confirm:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/cli/vigil-summary.py"
+"${CLAUDE_PLUGIN_ROOT}/cli/notte-summary.py"
 ```
 
-Tell them to open the Vigil app on a phone on the same Wi-Fi. It finds the Mac
+Tell them to open the Notte app on a phone on the same Wi-Fi. It finds the Mac
 by itself — there is no pairing code and no account.
 
 History works immediately: every transcript already on disk is included, so the
@@ -37,8 +37,8 @@ dial is populated on first launch rather than empty.
 ## Showing their numbers
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/cli/vigil-summary.py"            # a dial in the terminal
-"${CLAUDE_PLUGIN_ROOT}/cli/vigil-summary.py" --days 7   # rolling week
+"${CLAUDE_PLUGIN_ROOT}/cli/notte-summary.py"            # a dial in the terminal
+"${CLAUDE_PLUGIN_ROOT}/cli/notte-summary.py" --days 7   # rolling week
 ```
 
 Read the shape back, not just the totals. The peak hour, the share between
@@ -49,16 +49,16 @@ a total cannot.
 
 Check in order and stop at the first failure:
 
-1. `launchctl list | grep vigil` — agent loaded?
+1. `launchctl list | grep notte` — agent loaded?
 2. `curl -s localhost:7391/health` — serving? (this route needs no code)
-3. `curl -s "localhost:7391/summary?token=$(cat ~/.vigil/token)"` — does the
+3. `curl -s "localhost:7391/summary?token=$(cat ~/.notte/token)"` — does the
    code work? A 401 with the right code means the file and the running agent
    disagree; restart the agent.
-4. `dns-sd -B _vigil._tcp local` — advertising? (Ctrl-C to stop)
+4. `dns-sd -B _notte._tcp local` — advertising? (Ctrl-C to stop)
 5. Phone and Mac on the same Wi-Fi, phone not on a guest network. Guest
    networks often isolate clients, which no amount of configuration fixes.
 
-If they need the code again: `cat ~/.vigil/token`
+If they need the code again: `cat ~/.notte/token`
 
 There is no cloud fallback by design. If discovery fails there is a real network
 problem to fix, not a service to sign into.
@@ -78,6 +78,6 @@ It parses transcripts for one thing: timestamps. From those it derives
 five-minute activity bins, a count of typed prompts, and the folder each session
 ran in. Message content is parsed and discarded — never stored, never sent.
 
-The index at `~/.vigil/index.json` holds byte offsets and derived numbers so
+The index at `~/.notte/index.json` holds byte offsets and derived numbers so
 each run only reads what is new. Cold start is about a second; after that it is
 about 30 ms.
