@@ -92,6 +92,26 @@ honest.
    that can fail to register.
 3. **Never record content.**
 
+## Support
+
+Something not working? Open an issue:
+https://github.com/cotcot09/notte/issues
+
+Common fixes:
+
+**The app can't find my Mac.** Both devices have to be on the same Wi-Fi, and
+the Mac can't be asleep. Check the agent is running with
+`launchctl list | grep com.notte.serve`.
+
+**The pairing code doesn't work.** Codes are shown by `notte pair` and don't
+expire, but re-running it prints a new one and retires the old.
+
+**My hours look wrong.** Notte counts five-minute bins with real activity in
+them, so a session you left open but idle won't be counted. See
+[Why five-minute bins](#why-five-minute-bins).
+
+**I want to start over.** Delete `~/.notte` and unpair in the app.
+
 ## Licence
 
 MIT
